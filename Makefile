@@ -24,7 +24,7 @@ test:
 
 dep:
 	rm -f go.mod go.sum
-	${GO} mod init github.com/whitekid/glayer
+	${GO} mod init glayer
 	@$(MAKE) tidy
 
 tidy:
