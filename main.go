@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/faiface/beep"
@@ -36,6 +34,7 @@ func playURL(ctx context.Context, url string) error {
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
 		cancel()
 	})))
@@ -46,25 +45,12 @@ func playURL(ctx context.Context, url string) error {
 }
 
 func main() {
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, []os.Signal{os.Interrupt, syscall.SIGTERM}...)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		<-c
-
-		cancel()
-		os.Exit(1)
-	}()
-
 	root := &cobra.Command{
 		Use:          "audio_url",
 		SilenceUsage: true,
 		Short:        "console audio player",
 		Args:         cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return playURL(ctx, args[0])
-		},
+		RunE:         func(cmd *cobra.Command, args []string) error { return playURL(cmd.Context(), args[0]) },
 	}
 
 	if err := root.Execute(); err != nil {
